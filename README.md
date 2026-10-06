@@ -1,4 +1,4 @@
-# Aquafoundry AI Content Engine
+# N8N AI Content Engine
 
 A 39-node n8n workflow that turns campaign dates and a product asset catalog into a structured content plan and branded image creatives. Built by Saurav Samal as a portfolio project for backend integration and workflow automation.
 
