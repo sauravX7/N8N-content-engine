@@ -1,0 +1,2265 @@
+{
+  "name": "social-media-gen-v8",
+  "nodes": [
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": []
+        },
+        "options": {
+          "dataLocationOnSheet": {
+            "values": {
+              "rangeDefinition": "detectAutomatically"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        320
+      ],
+      "id": "97a88c6a-162c-4ff6-a155-93053326910e",
+      "name": "Get row(s) in sheet1",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f8bd4356-0704-4f48-9306-55e94fb7fa7d",
+              "leftValue": "={{ ($json.Post_Type || \"\").trim() }}",
+              "rightValue": "Post",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "a96506b9-ccb6-4591-bb7c-6c0af3dc2705",
+              "leftValue": "={{ ($json.Status || \"\").trim() }}",
+              "rightValue": "pending",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        320
+      ],
+      "id": "bb669709-d42c-4099-bbdb-6f0ee66b4a2b",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://YOUR_PROJECT.supabase.co/storage/v1/object/aquaponics-media/{{\nencodeURIComponent(\n  String($json[\"Day\"] || \"day\")\n    .replace(/[^a-zA-Z0-9]/g, \"-\")\n  + \"-\" +\n  String($json[\"Post_Number\"] || \"post\").replace(/\\s+/g, \"-\")\n)\n}}.jpg",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "image/jpeg"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {},
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        4256,
+        320
+      ],
+      "id": "975ce164-8b3b-4789-85f7-613986a6e80a",
+      "name": "SUPAbase_Image_storage",
+      "alwaysOutputData": false,
+      "executeOnce": false
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        320
+      ],
+      "id": "f8c67cb4-73ae-4596-a919-f7f6e9a54e32",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "options": {},
+        "batchSize": 1
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        672,
+        320
+      ],
+      "id": "2e7b652f-6750-4f9e-9571-835a697b7623",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        5152,
+        320
+      ],
+      "id": "cb0a3c8e-0794-4b70-8eca-17b7c9c48e0a",
+      "name": "Wait"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "let day = $json.Day;\nlet postNumber = $json.Post_Number;\n\n// 🔥 FORCE STRING SAFETY\nif (typeof day !== \"string\") {\n  day = JSON.stringify(day || \"day\");\n}\n\nif (typeof postNumber !== \"string\") {\n  postNumber = String(postNumber || \"post\");\n}\n\n// clean values\npostNumber = postNumber.replace(/\\s+/g, \"-\");\n\nconst cleanDay = day\n  .replace(/[^a-zA-Z0-9]/g, \"-\")\n  .replace(/^-|-$/g, \"\");\n\n// fallback safety (important)\nconst safeDay = cleanDay || \"day\";\nconst safePost = postNumber || \"post\";\n\nconst fileName = `${safeDay}-${safePost}.jpg`;\n\nreturn {\n  ...$json,\n  Image_URL: `https://YOUR_PROJECT.supabase.co/storage/v1/object/public/aquaponics-media/${fileName}`\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4704,
+        256
+      ],
+      "id": "e500f6c7-826b-4e43-b33c-e1d821a39c5b",
+      "name": "Generate Image URL"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Row_ID": "={{ $('Get row(s) in sheet1').item.json.Row_ID }}",
+            "Image_URL": "={{ $json.Image_URL }}",
+            "Status": "completed",
+            "Selected_Logo_URL": "={{ $json.Selected_Logo_URL }}",
+            "Selected_Mascot_URL": "={{ $json.Selected_Mascot_URL }}",
+            "Creative_Strategy": "={{ $json.Creative_Strategy }}",
+            "Product_Usage_Direction": "={{ $json.Product_Usage_Direction }}",
+            "Design_Usage_Direction": "={{ $json.Design_Usage_Direction }}",
+            "Mascot_Scene_Direction": "={{ $json.Mascot_Scene_Direction }}",
+            "Product Type": "={{ $json.Product_Type }}",
+            "Rendering Mode": "={{ $json.Rendering_Mode }}",
+            "Selected Product Label Url": "={{ $json.Selected_Product_Label_URL }}",
+            "Product Label Rule": "={{ $json.Product_Label_Rule }}",
+            "Serving Format": "={{ $json.Serving_Format }}",
+            "Forbidden Visuals": "={{ $json.Forbidden_Visuals }}",
+            "Product_Focus": "={{ $json.roduct_Focus }}",
+            "Selected_Product_Reference_ID": "={{ $json.Selected_Product_Reference_ID }}",
+            "Selected_Product_Reference_URL": "={{ $json.Selected_Product_Reference_URL }}",
+            "Selected_Design_Reference_ID": "={{ $json.Selected_Design_Reference_ID }}",
+            "Design_Reference_Style": "={{ $json.Design_Reference_Style }}"
+          },
+          "matchingColumns": [
+            "Row_ID"
+          ],
+          "schema": [
+            {
+              "id": "Row_ID",
+              "displayName": "Row_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Day",
+              "displayName": "Day",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Post_Number",
+              "displayName": "Post_Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Post_Type",
+              "displayName": "Post_Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Composition_Direction",
+              "displayName": "Composition_Direction",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Marketing_Angle",
+              "displayName": "Marketing_Angle",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Creative_Direction",
+              "displayName": "Creative_Direction",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Ad_Focus",
+              "displayName": "Ad_Focus",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Mascot_Action",
+              "displayName": "Mascot_Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Image_Prompt",
+              "displayName": "Image_Prompt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Headline",
+              "displayName": "Headline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Subheadline",
+              "displayName": "Subheadline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "CTA",
+              "displayName": "CTA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Features",
+              "displayName": "Features",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Caption",
+              "displayName": "Caption",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Image_URL",
+              "displayName": "Image_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Video_Script_Prompt",
+              "displayName": "Video_Script_Prompt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Selected_Logo_URL",
+              "displayName": "Selected_Logo_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Selected_Mascot_URL",
+              "displayName": "Selected_Mascot_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Creative_Strategy",
+              "displayName": "Creative_Strategy",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Product_Usage_Direction",
+              "displayName": "Product_Usage_Direction",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Design_Usage_Direction",
+              "displayName": "Design_Usage_Direction",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Mascot_Scene_Direction",
+              "displayName": "Mascot_Scene_Direction",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Product_Focus",
+              "displayName": "Product_Focus",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Selected_Product_Reference_ID",
+              "displayName": "Selected_Product_Reference_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Selected_Product_Reference_URL",
+              "displayName": "Selected_Product_Reference_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Selected_Design_Reference_ID",
+              "displayName": "Selected_Design_Reference_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Design_Reference_Style",
+              "displayName": "Design_Reference_Style",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Product Type",
+              "displayName": "Product Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Rendering Mode",
+              "displayName": "Rendering Mode",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Selected Product Label Url",
+              "displayName": "Selected Product Label Url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Product Label Rule",
+              "displayName": "Product Label Rule",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Serving Format",
+              "displayName": "Serving Format",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Forbidden Visuals",
+              "displayName": "Forbidden Visuals",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        4928,
+        256
+      ],
+      "id": "41ecb375-ea27-4e81-9068-a0b9e4084700",
+      "name": "Update Image URL"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        4480,
+        256
+      ],
+      "id": "ac84a6b1-9b51-4ff0-9ed6-758c4cfaabd1",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Get inputs from the Form Trigger\nconst topic = $input.item.json.topic;\nconst startDateStr = $input.item.json.startDate;\nconst endDateStr = $input.item.json.endDate;\n\n// 2. Convert strings into real Date objects\nconst start = new Date(startDateStr);\nconst end = new Date(endDateStr);\n\n// 3. Calculate the duration (number of days) for Gemini's reference\nconst diffTime = Math.abs(end - start);\nconst duration = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end days\n\n// 4. Return everything to the next node\nreturn {\n  topic: topic,\n  startDate: start.toISOString(),\n  endDate: end.toISOString(),\n  duration: duration\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "41a581db-83ed-48b7-9d51-60e30b3143df",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "en-gb.indian#holiday@group.v.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Holidays in India"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $json.startDate }}",
+        "timeMax": "={{ $json.endDate }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        448,
+        0
+      ],
+      "id": "a742082d-723a-4e04-92ab-24a09e2b7b3d",
+      "name": "Get many events",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "fieldsToSummarize": {
+          "values": [
+            {
+              "aggregation": "concatenate",
+              "field": "summary",
+              "separateBy": ", "
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.summarize",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        0
+      ],
+      "id": "3c615c39-425a-4c18-9bce-0aed6b968633",
+      "name": "Summarize"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-flash-latest",
+          "mode": "list",
+          "cachedResultName": "models/gemini-flash-latest"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Act as a Senior Social Media Creative Director and AI Advertising Strategist.\n\nCreate a high-engagement content strategy for Aquafoundry for:\n{{ $node[\"Code in JavaScript\"].json[\"duration\"] }} days.\n\nThe goal is NOT to create generic aquaponics content.\n\nThe goal is to create a premium product-aware Instagram content plan where:\n- some posts focus on Aquafoundry products\n- some posts focus on fresh produce outcomes\n- some posts focus on aquaponics systems\n- some posts focus on Indian urban lifestyle\n- some posts are educational\n- some posts are sustainability-focused\n- some posts are mascot-supported storytelling posts\n\n--------------------------------------------------\nCONTEXT & HOLIDAYS\n--------------------------------------------------\n\nInclude relevant content for these dates/events if relevant:\n{{ $node[\"Summarize\"].json[\"concatenated_summary\"] || 'None' }}\n\n--------------------------------------------------\nBRAND CONTEXT\n--------------------------------------------------\n\nBrand Name:\nAquafoundry\n\nWebsite:\nhttps://www.aquafoundry.com/\n\nLocation:\nIndia\n\nNiche:\nAquaponics, sustainable farming, home-grown produce, urban farming systems, premium home-growing products\n\nTone:\nclean, modern, eco-friendly, trustworthy, premium\n\nTarget Audience:\n- urban Indian consumers\n- home growers\n- families\n- sustainability-focused audience\n- premium lifestyle audience\n- people interested in clean eating\n- people interested in growing food at home\n\nCore Message:\nFresh, chemical-free produce grown using innovative aquaponics systems and premium home-growing products.\n\n--------------------------------------------------\nASSET CATALOG\n--------------------------------------------------\n\n{{ JSON.stringify($json.Asset_Catalog) }}\n\n--------------------------------------------------\nVERY IMPORTANT PRODUCT DESCRIPTION RULE\n--------------------------------------------------\n\nThe Asset_Catalog.products list contains analyzed product descriptions.\n\nWhen selecting a product reference, use these fields:\n- visual_description\n- best_for\n- prompt_guidance\n\nFor every product-focused Post:\n- the ai_image_prompt must describe the selected product visually\n- the selected product/product concept must be the main subject\n- the ai_image_prompt must include the exact phrase: \"product hero composition\"\n- do not create a generic aquaponics system unless the selected product description supports it\n- do not create only loose greens unless ad_focus is produce-focused\n\nEach product-focused ai_image_prompt must include:\n- product visual form\n- product placement\n- Indian environment\n- camera angle\n- lighting\n- negative space\n- premium commercial photography style\n\n--------------------------------------------------\nPRODUCT STRATEGY CONTEXT\n--------------------------------------------------\n\n{{ $json.Product_Strategy_Context }}\n\nUse the product references to decide WHAT each ad is about.\n\nVery important:\n- Do NOT create only generic aquaponics system ads.\n- Do NOT create only generic leafy produce ads.\n- Product references must actively influence the content plan.\n- Product-focused posts must make the selected product or product concept the visual hero.\n- Produce-focused posts must show produce as the outcome/benefit of using the product/system.\n- Lifestyle-focused posts must show the product/product concept in Indian homes, balconies, terraces, or kitchens.\n- Educational-focused posts must visually explain the value of the product/system.\n- Sustainability-focused posts must show the eco-friendly/water-saving/circular farming benefit.\n- Mascot-focused posts should use mascot storytelling but must still connect to product, produce, or brand benefit.\n\nFor every Post, select ONE product reference from Asset_Catalog.products.\n\nThe selected product reference must influence:\n- product_focus\n- composition_direction\n- ai_image_prompt\n- ad_copy\n- caption\n\n--------------------------------------------------\nDESIGN STRATEGY CONTEXT\n--------------------------------------------------\n\n{{ $json.Design_Strategy_Context }}\n\nThe design references represent the desired visual language.\n\nUse the design references to decide HOW each ad should feel visually.\n\nVery important:\n- Do NOT copy the design references exactly.\n- Use them as style direction.\n- Every Post must choose ONE design reference style.\n- The selected design reference must influence the image prompt.\n- The final ad typography will later follow this selected design style.\n\nThe selected design reference should guide:\n- visual hierarchy\n- negative space\n- product placement\n- premium ad feel\n- composition direction\n- typography mood\n- Instagram paid-ad style\n\n--------------------------------------------------\nLOGO / MASCOT RULE\n--------------------------------------------------\n\n{{ $json.Logo_Mascot_Selection_Context }}\n\nDo NOT select logo during strategy generation.\nDo NOT select mascot during strategy generation.\n\nLogo and mascot will be selected later after the raw image is generated.\n\nDuring this strategy stage, only provide:\n- mascot_action\n\nDo not provide:\n- selected_logo_url\n- selected_mascot_url\n\n--------------------------------------------------\nVERY IMPORTANT STRATEGY RULE\n--------------------------------------------------\n\nFor every Post:\n- choose one product reference from Asset_Catalog.products\n- choose one design reference style from Asset_Catalog.design_references\n- create the ai_image_prompt based on the selected product and selected design style\n- do not create generic aquaponics-only prompts unless ad_focus is system-focused\n- do not make loose greens the hero unless ad_focus is produce-focused\n- make at least 50% of Posts product-focused\n- every product-focused Post must clearly describe a product hero ad\n\n--------------------------------------------------\nAD FOCUS ROTATION\n--------------------------------------------------\n\nEach Post must include one:\n\n\"ad_focus\"\n\nChoose from:\n- product-focused\n- produce-focused\n- system-focused\n- lifestyle-focused\n- educational-focused\n- sustainability-focused\n- mascot-focused\n\nRules:\n- Do not repeat the same ad_focus consecutively.\n- At least 50% of Posts must be product-focused.\n- Product-focused posts must make the selected product/product concept the hero.\n- Produce-focused posts must show produce as the benefit or outcome.\n- System-focused posts can show the aquaponics system.\n- Lifestyle-focused posts should show the product/system in Indian home, balcony, kitchen, or terrace context.\n- Educational-focused posts should visually explain the product/system benefit.\n- Sustainability-focused posts should show eco-friendly, water-saving, circular farming mood.\n- Mascot-focused posts should support storytelling, not feel childish.\n\n--------------------------------------------------\nPRODUCT-FOCUSED POST RULE\n--------------------------------------------------\n\nFor every product-focused Post:\n\nThe selected product contains important product truth metadata:\n\n- product_visual_identity\n- product_color_direction\n- packaging_photography_style\n- product_priority_type\n\nThe ai_image_prompt MUST use these fields.\n\n--------------------------------------------------\nVERY IMPORTANT PRODUCT RULES\n--------------------------------------------------\n\nThe generated product must visually match the selected product category exactly.\n\nExamples:\n\n- pesto = thick creamy herb pesto spread\n- tomato sauce = warm rustic tomato sauce\n- salad = fresh leafy produce\n- dressing = liquid dressing consistency\n\nNever visually confuse:\n- pesto with juice\n- sauce with smoothie\n- salad with sauce\n- dressing with pesto\n\nThe ai_image_prompt must:\n- use product_visual_identity\n- use product_color_direction\n- use packaging_photography_style\n- respect forbidden_visuals\n\nDo NOT create generic green wellness drinks unless the product is actually a juice product.\n\nDo NOT create aquaponics systems for packaged_food unless explicitly system-focused.\n\nProduct category consistency is mandatory.\n\n--------------------------------------------------\nPRODUCT SELECTION\n--------------------------------------------------\n\nEach Post must include:\n- selected_product_reference_id\n- selected_product_reference_url\n- product_focus\n\nProduct focus examples:\n- compact balcony aquaponics system\n- home grow kit\n- fresh herb growing product\n- premium urban farming product\n- aquaponics produce basket\n- smart home farming setup\n- leafy greens harvest kit\n- kitchen-to-balcony farming setup\n- product-led fresh food solution\n- product that helps Indian homes grow clean food\n\nThe product_focus should be specific and should match the selected product reference.\n\n--------------------------------------------------\nDESIGN SELECTION\n--------------------------------------------------\n\nEach Post must include:\n- selected_design_reference_id\n- design_reference_style\n\nThe selected design reference should influence:\n- composition_direction\n- negative space\n- product placement\n- premium ad feel\n- typography mood for final edit\n- clean Instagram ad structure\n\nDo not copy the design reference exactly.\nUse it as creative direction.\n\n--------------------------------------------------\nCOMPOSITION DIRECTION\n--------------------------------------------------\n\nEach Post must include:\n\n\"composition_direction\"\n\nExamples:\n- premium product hero shot with soft Indian balcony background\n- cinematic product close-up with negative space on the left\n- product displayed beside fresh greens in Indian terrace light\n- editorial kitchen scene with product and herbs\n- clean product-first commercial composition\n- lifestyle scene with family harvesting from home system\n- wide terrace farming scene with clean wall space for text\n- product demonstration scene with realistic Indian hands\n- product centered on a clean table with Indian home balcony depth\n- product placed near fresh harvest basket with premium natural light\n\nRules:\n- Do not use fixed templates.\n- Do not use layout A/B/C/D.\n- Make each composition visually unique.\n- Composition must support ad_focus and product_focus.\n- Composition must leave clean negative space for typography.\n\n--------------------------------------------------\nINDIA-SPECIFIC VISUAL RULES\n--------------------------------------------------\n\nAll visuals must reflect Indian context.\n\nUse:\n- Indian balconies\n- Indian terraces\n- Indian kitchens\n- Indian homes\n- small urban farming setups\n- Indian hands and skin tones\n- natural Indian daylight\n- realistic Indian apartments/buildings\n\nDO NOT:\n- create Western homes\n- create unrealistic farms\n- create fantasy environments\n- create generic foreign greenhouse scenes\n- create overly futuristic sci-fi setups\n\n--------------------------------------------------\nIMAGE PROMPT RULES\n--------------------------------------------------\n\nEach Post must include:\n\n\"ai_image_prompt\"\n\nThe image prompt must be product-aware and design-aware.\n\nThe prompt should describe:\n- selected product reference influence\n- selected product visual_description\n- selected product prompt_guidance\n- product/environment placement\n- Indian context\n- lighting\n- camera angle\n- composition\n- mood\n- focal subject\n- negative space for typography\n- premium commercial photography direction\n- how the selected design reference style influences composition\n\nDO NOT include:\n- actual text\n- logo\n- mascot\n- CTA\n- typography instructions\n- headline placement\n- button placement\n\nThe raw image should already feel like a professional advertising scene before final edit.\n\n--------------------------------------------------\nGOOD IMAGE PROMPT EXAMPLES\n--------------------------------------------------\n\nFor product-focused:\n\"Premium product hero composition of the selected Aquafoundry home-growing product in a modern Indian balcony, product clearly centered and desirable, fresh herbs around it as supporting elements, soft natural daylight, clean negative space on the right, modern DTC commercial photography, premium green-white-blue mood, realistic Indian apartment background, no text, no logo, no mascot.\"\n\nFor produce-focused:\n\"Close-up commercial photography of fresh herbs and leafy greens harvested from an Aquafoundry product setup, Indian hands holding the produce near a clean balcony farming system, produce as the benefit/outcome, soft morning light, premium natural colors, clean negative space for later typography, realistic Indian home context, no text, no logo, no mascot.\"\n\nFor lifestyle-focused:\n\"Premium lifestyle scene of an Indian family using an Aquafoundry home-growing product on a terrace, product visible and naturally integrated, fresh greens nearby, warm daylight, clean modern composition inspired by premium Instagram ad design, negative space for text, no logo, no mascot, no typography.\"\n\nFor educational-focused:\n\"Clean product demonstration scene showing the selected Aquafoundry product/system in an Indian balcony, visible water/plant/fish relationship suggested naturally, product clear and central, minimal uncluttered composition, premium commercial photography, clean space for educational overlay later, no text, no logo, no mascot.\"\n\n--------------------------------------------------\nCREATIVE DIRECTION\n--------------------------------------------------\n\nEach Post must include:\n\n\"creative_direction\"\n\nRotate between:\n- editorial premium\n- cinematic lifestyle\n- modern DTC\n- organic luxury\n- energetic commercial\n- documentary realism\n\n--------------------------------------------------\nMARKETING ANGLE\n--------------------------------------------------\n\nEach Post must include:\n\n\"marketing_angle\"\n\nRotate:\n- Offer\n- Benefit\n- Freshness\n- Sustainability\n- Education\n- Trust\n- Urgency\n\n--------------------------------------------------\nMASCOT ACTION\n--------------------------------------------------\n\nEach Post must include:\n\n\"mascot_action\"\n\nRotate between:\n- pointing\n- holding produce\n- explaining\n- interacting with plants\n- presenting product\n- harvesting\n- celebrating freshness\n\nDo not choose the actual mascot image.\nOnly describe the intended mascot action for later.\n\n--------------------------------------------------\nPRODUCT RENDERING MODE RULE\n--------------------------------------------------\n\nEach Post must include:\n\n\"product_type\"\n\"rendering_mode\"\n\"selected_product_label_url\"\n\"product_label_rule\"\n\"serving_format\"\n\"forbidden_visuals\"\n\nRules:\n\nIf product_type is salad or fresh produce:\n- rendering_mode must be \"creative_food_scene\"\n- selected_product_label_url may be empty\n- do not force packaging\n- salads may be shown as bowls, plates, harvest scenes, flatlays, or lifestyle food photography\n\nIf product_type is pesto, dressing, sauce, jar, bottle, or packaged product:\n- rendering_mode must be \"packaging_locked\"\n- selected_product_label_url must use the selected product's label_url\n- raw image prompt must create a realistic jar/bottle/packaging scene with blank label area\n- do not generate fake product label text\n- do not invent product names\n- do not recreate the label\n- the exact uploaded label will be applied later in final edit\n\nAlways respect:\n- label_rule\n- serving_format\n- forbidden_visuals\n\n--------------------------------------------------\nAD COPY RULES\n--------------------------------------------------\n\nEach Post MUST include:\n\n\"ad_copy\": {\n  \"headline\": \"3-6 words\",\n  \"cta\": \"2-3 words\",\n  \"features\": [\n    \"...\",\n    \"...\",\n    \"...\"\n  ]\n}\n\nRules:\n- headline = strong hook\n- CTA = short and premium\n- features = short, benefit-focused\n- copy should match ad_focus and product_focus\n- product-focused posts should have product-led copy\n- produce-focused posts should have freshness/health copy\n- sustainability-focused posts should have eco/water-saving copy\n\nDO NOT generate ad_copy for Reels.\n\n--------------------------------------------------\nREELS\n--------------------------------------------------\n\nEach Reel must include:\n- 20–30 sec script\n- scene-by-scene\n- camera movement\n- hook\n- emotional pacing\n\nReels do not need:\n- ad_copy\n- selected_product_reference_url\n- selected_design_reference_id\n\n--------------------------------------------------\nCAPTION RULES\n--------------------------------------------------\n\nCaptions must:\n- be engaging\n- feel human-written\n- contain 3+ sentences\n- contain 5–8 hashtags\n- avoid generic AI tone\n- match the selected ad_focus\n- mention product benefits naturally where relevant\n\n--------------------------------------------------\nSTRICT CONTENT RULES\n--------------------------------------------------\n\n1. EXACTLY 2 items per day:\n- 1 Post\n- 1 Reel\n\n2. NO carousels\n\n3. DAY FORMAT:\n\"Day [X]: [Date] - [Topic Title]\"\n\n4. Return ONLY valid JSON array.\n\n5. Do not add explanation outside JSON.\n\n--------------------------------------------------\nOUTPUT FORMAT\n--------------------------------------------------\n\nReturn ONLY valid JSON array.\n\n[\n  {\n    \"day\": \"Day 1: ...\",\n    \"posts\": [\n{\n  \"post_type\": \"Post\",\n  \"creative_direction\": \"...\",\n  \"ad_focus\": \"...\",\n  \"product_focus\": \"...\",\n  \"product_type\": \"...\",\n  \"rendering_mode\": \"creative_food_scene or packaging_locked\",\n  \"selected_product_reference_id\": \"product1\",\n  \"selected_product_reference_url\": \"...\",\n  \"selected_product_label_url\": \"...\",\n  \"product_label_rule\": \"...\",\n  \"serving_format\": \"...\",\n  \"forbidden_visuals\": \"...\",\n  \"selected_design_reference_id\": \"design1\",\n  \"design_reference_style\": \"...\",\n  \"composition_direction\": \"...\",\n  \"mascot_action\": \"...\",\n  \"marketing_angle\": \"...\",\n  \"ai_image_prompt\": \"...\",\n  \"ad_copy\": {\n    \"headline\": \"...\",\n    \"cta\": \"...\",\n    \"features\": [\"...\", \"...\", \"...\"]\n    \"product_visual_identity\": \"...\",\n    \"product_color_direction\": \"...\",\n    \"packaging_photography_style\": \"...\",\n    \"product_priority_type\": \"...\",\n\n  },\n  \"caption\": \"...\"\n}\n        \"caption\": \"...\"\n      },\n      {\n        \"post_type\": \"Reel\",\n        \"video_script_prompt\": \"...\",\n        \"caption\": \"...\"\n      }\n    ]\n  }\n]"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        1344,
+        0
+      ],
+      "id": "1613ea10-9cbb-4b7b-a45a-ac4daea8a632",
+      "name": "Message a model",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "jsCode": "let rawText;\n\ntry {\n  rawText =\n    $node[\"Message a model\"].json.content?.parts?.[0]?.text ||\n    $node[\"Message a model\"].json.candidates?.[0]?.content?.parts?.[0]?.text ||\n    $node[\"Message a model\"].json.text ||\n    \"\";\n} catch (e) {\n  throw new Error(\"AI response missing\");\n}\n\nif (!rawText) {\n  throw new Error(\n    \"AI response text missing. Full response:\\n\" +\n    JSON.stringify($node[\"Message a model\"].json, null, 2)\n  );\n}\n\nrawText = String(rawText)\n  .replace(/```json/gi, \"\")\n  .replace(/```/g, \"\")\n  .trim();\n\nconst jsonMatch = rawText.match(/\\[[\\s\\S]*\\]/);\n\nif (!jsonMatch) {\n  throw new Error(\"No JSON array found in AI response:\\n\" + rawText);\n}\n\nlet campaignData;\n\ntry {\n  campaignData = JSON.parse(jsonMatch[0]);\n} catch (e) {\n  throw new Error(\"Invalid JSON:\\n\" + rawText);\n}\n\nif (!Array.isArray(campaignData)) {\n  campaignData = [campaignData];\n}\n\nconst angleRotation = [\"Offer\", \"Benefit\", \"Freshness\", \"Sustainability\", \"Education\", \"Trust\", \"Urgency\"];\n\nconst creativeDirections = [\n  \"editorial premium\",\n  \"cinematic lifestyle\",\n  \"modern DTC\",\n  \"organic luxury\",\n  \"energetic commercial\",\n  \"documentary realism\"\n];\n\nconst adFocuses = [\n  \"product-focused\",\n  \"produce-focused\",\n  \"system-focused\",\n  \"lifestyle-focused\",\n  \"educational-focused\",\n  \"sustainability-focused\",\n  \"mascot-focused\"\n];\n\nconst mascotActions = [\n  \"pointing\",\n  \"holding produce\",\n  \"explaining\",\n  \"interacting with plants\",\n  \"presenting product\",\n  \"harvesting\",\n  \"celebrating freshness\"\n];\n\nconst compositionDirections = [\n  \"premium product hero shot with soft Indian balcony background\",\n  \"cinematic product close-up with negative space on the left\",\n  \"product displayed beside fresh greens in Indian terrace light\",\n  \"editorial kitchen scene with product and herbs\",\n  \"clean product-first commercial composition\",\n  \"lifestyle scene with family harvesting from home system\",\n  \"wide terrace farming scene with clean wall space for text\"\n];\n\nconst flattenedRows = [];\n\ncampaignData.forEach((dayEntry, dayIndex) => {\n  const dayValue = dayEntry.day || `Day ${dayIndex + 1}`;\n\n  const postList = Array.isArray(dayEntry.posts)\n    ? dayEntry.posts\n    : [dayEntry];\n\n  postList.forEach((post, index) => {\n    const cleanDay = String(dayValue)\n      .replace(/[^a-zA-Z0-9]/g, \"-\")\n      .replace(/-+/g, \"-\")\n      .replace(/^-|-$/g, \"\");\n\n    const rowId = `${cleanDay}-${index + 1}`;\n\n    let postType = String(post.post_type || \"\").toLowerCase();\n    postType = postType.includes(\"reel\") ? \"Reel\" : \"Post\";\n\n    const adCopy = post.ad_copy || {};\n\n    const headline = postType === \"Post\"\n      ? String(adCopy.headline || \"Fresh. Clean. Local.\").trim()\n      : \"\";\n\n \n\n    const cta = postType === \"Post\"\n      ? String(adCopy.cta || \"Shop Now\").trim()\n      : \"\";\n\n    const features = Array.isArray(adCopy.features)\n      ? adCopy.features.map(f => String(f).trim()).filter(Boolean)\n      : [\"Chemical-free\", \"Fresh harvest\", \"Sustainable\"];\n\n    const marketingAngle = postType === \"Post\"\n      ? String(post.marketing_angle || angleRotation[dayIndex % angleRotation.length]).trim()\n      : \"\";\n\n    const creativeDirection = postType === \"Post\"\n      ? String(post.creative_direction || creativeDirections[dayIndex % creativeDirections.length]).trim()\n      : \"\";\n\n    const adFocus = postType === \"Post\"\n      ? String(post.ad_focus || adFocuses[dayIndex % adFocuses.length]).trim()\n      : \"\";\n\n    const productFocus = postType === \"Post\"\n      ? String(post.product_focus || \"premium Aquafoundry product\").trim()\n      : \"\";\n\n    const productType = postType === \"Post\"\n      ? String(post.product_type || \"\").trim()\n      : \"\";\n\n    let renderingMode = postType === \"Post\"\n      ? String(post.rendering_mode || \"\").trim()\n      : \"\";\n\n    if (!renderingMode && productType) {\n      const type = productType.toLowerCase();\n      if ([\"pesto\", \"dressing\", \"sauce\", \"jar\", \"bottle\"].some(t => type.includes(t))) {\n        renderingMode = \"packaging_locked\";\n      } else {\n        renderingMode = \"creative_food_scene\";\n      }\n    }\n\n    if (!renderingMode) {\n      renderingMode = \"creative_food_scene\";\n    }\n\n    const selectedProductReferenceId = postType === \"Post\"\n      ? String(post.selected_product_reference_id || post.selected_product_reference?.id || \"\").trim()\n      : \"\";\n\n    const selectedProductReferenceUrl = postType === \"Post\"\n      ? String(post.selected_product_reference_url || post.selected_product_reference?.url || \"\").trim()\n      : \"\";\n\n    const selectedProductLabelUrl = postType === \"Post\"\n      ? String(post.selected_product_label_url || post.selected_product_reference?.label_url || \"\").trim()\n      : \"\";\n\n    const productLabelRule = postType === \"Post\"\n      ? String(post.product_label_rule || post.selected_product_reference?.label_rule || \"\").trim()\n      : \"\";\n\n    const servingFormat = postType === \"Post\"\n      ? String(post.serving_format || post.selected_product_reference?.serving_format || \"\").trim()\n      : \"\";\n\n    const forbiddenVisuals = postType === \"Post\"\n      ? String(post.forbidden_visuals || post.selected_product_reference?.forbidden_visuals || \"\").trim()\n      : \"\";\n\n    const selectedDesignReferenceId = postType === \"Post\"\n      ? String(post.selected_design_reference_id || post.selected_design_reference?.id || \"\").trim()\n      : \"\";\n\n    const designReferenceStyle = postType === \"Post\"\n      ? String(\n          post.design_reference_style ||\n          post.selected_design_reference?.style ||\n          post.selected_design_reference?.style_guidance ||\n          \"\"\n        ).trim()\n      : \"\";\n\n    const compositionDirection = postType === \"Post\"\n      ? String(post.composition_direction || compositionDirections[dayIndex % compositionDirections.length]).trim()\n      : \"\";\n\n    const mascotAction = postType === \"Post\"\n      ? String(post.mascot_action || mascotActions[dayIndex % mascotActions.length]).trim()\n      : \"\";\n\n    let imagePrompt = postType === \"Post\"\n      ? String(post.ai_image_prompt || \"premium Indian food/product advertising scene, natural daylight\").trim()\n      : \"\";\n\n    if (postType === \"Post\" && adFocus.toLowerCase().includes(\"product\")) {\n      if (!imagePrompt.toLowerCase().includes(\"product hero composition\")) {\n        imagePrompt = `Product hero composition, ${imagePrompt}`;\n      }\n    }\n\n    if (postType === \"Post\" && renderingMode === \"packaging_locked\") {\n      if (!imagePrompt.toLowerCase().includes(\"blank label\")) {\n        imagePrompt += \", realistic blank label area on the product packaging for exact label compositing later\";\n      }\n\n      if (!imagePrompt.toLowerCase().includes(\"no text\")) {\n        imagePrompt += \", no text, no logo, no mascot, no product label text\";\n      }\n    }\n\n    if (postType === \"Post\" && renderingMode === \"creative_food_scene\") {\n      if (!imagePrompt.toLowerCase().includes(\"no text\")) {\n        imagePrompt += \", no text, no logo, no mascot\";\n      }\n    }\n\n    flattenedRows.push({\n      Row_ID: rowId,\n      Day: dayValue,\n      Post_Number: `post-${index + 1}`,\n      Post_Type: postType,\n\n      Marketing_Angle: marketingAngle,\n      Creative_Direction: creativeDirection,\n      Ad_Focus: adFocus,\n      Product_Focus: productFocus,\n\n      Product_Type: productType,\n      Rendering_Mode: renderingMode,\n      Selected_Product_Label_URL: selectedProductLabelUrl,\n      Product_Label_Rule: productLabelRule,\n      Serving_Format: servingFormat,\n      Forbidden_Visuals: forbiddenVisuals,\n      Product_Visual_Identity: post.product_visual_identity || \"\",\n      Product_Color_Direction: post.product_color_direction || \"\",\n      Packaging_Photography_Style: post.packaging_photography_style || \"\",\n      Product_Priority_Type: post.product_priority_type || \"\",\n\n      Selected_Product_Reference_ID: selectedProductReferenceId,\n      Selected_Product_Reference_URL: selectedProductReferenceUrl,\n\n      Selected_Design_Reference_ID: selectedDesignReferenceId,\n      Design_Reference_Style: designReferenceStyle,\n\n      Composition_Direction: compositionDirection,\n      Mascot_Action: mascotAction,\n\n      Image_Prompt: imagePrompt,\n\n      Video_Script_Prompt: postType === \"Reel\"\n        ? String(post.video_script_prompt || \"\").trim()\n        : \"\",\n\n      Headline: headline,\n      CTA: cta,\n      Features: postType === \"Post\" ? features.join(\" | \") : \"\",\n\n      Caption: String(post.caption || \"Fresh sustainable farming. #aquaponics\").trim(),\n\n      Selected_Logo_URL: \"\",\n      Selected_Mascot_URL: \"\",\n      Creative_Strategy: \"\",\n      Product_Usage_Direction: \"\",\n      Design_Usage_Direction: \"\",\n      Mascot_Scene_Direction: \"\",\n\n      Status: \"pending\",\n      Image_URL: \"\"\n    });\n  });\n});\n\nreturn flattenedRows;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1696,
+        0
+      ],
+      "id": "4ea6d1c7-cb2a-4d69-84df-c625017935d7",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "Day": "={{ $json.Day }}",
+            "Post_Number": "={{ $json.Post_Number }}",
+            "Post_Type": "={{ $json.Post_Type }}",
+            "Image_Prompt": "={{ $json.Image_Prompt }}",
+            "Caption": "={{ $json.Caption }}",
+            "Row_ID": "={{ $json.Row_ID }}",
+            "Status": "={{ $json.Status }}",
+            "Headline": "={{ $json.Headline }}",
+            "Subheadline": "={{ $json.Subheadline }}",
+            "CTA": "={{ $json.CTA }}",
+            "Features": "={{ $json.Features }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Row_ID",
+              "displayName": "Row_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Day",
+              "displayName": "Day",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Post_Number",
+              "displayName": "Post_Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Post_Type",
+              "displayName": "Post_Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Composition_Direction",
+              "displayName": "Composition_Direction",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Marketing_Angle",
+              "displayName": "Marketing_Angle",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Creative_Direction",
+              "displayName": "Creative_Direction",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Ad_Focus",
+              "displayName": "Ad_Focus",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Mascot_Action",
+              "displayName": "Mascot_Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Image_Prompt",
+              "displayName": "Image_Prompt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Headline",
+              "displayName": "Headline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Subheadline",
+              "displayName": "Subheadline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "CTA",
+              "displayName": "CTA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Features",
+              "displayName": "Features",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Caption",
+              "displayName": "Caption",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Image_URL",
+              "displayName": "Image_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Video_Script_Prompt",
+              "displayName": "Video_Script_Prompt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Selected_Logo_URL",
+              "displayName": "Selected_Logo_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Selected_Mascot_URL",
+              "displayName": "Selected_Mascot_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Creative_Strategy",
+              "displayName": "Creative_Strategy",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Product_Usage_Direction",
+              "displayName": "Product_Usage_Direction",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Design_Usage_Direction",
+              "displayName": "Design_Usage_Direction",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Mascot_Scene_Direction",
+              "displayName": "Mascot_Scene_Direction",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Product_Focus",
+              "displayName": "Product_Focus",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Selected_Product_Reference_ID",
+              "displayName": "Selected_Product_Reference_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Selected_Product_Reference_URL",
+              "displayName": "Selected_Product_Reference_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Selected_Design_Reference_ID",
+              "displayName": "Selected_Design_Reference_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Design_Reference_Style",
+              "displayName": "Design_Reference_Style",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Product Type",
+              "displayName": "Product Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Rendering Mode",
+              "displayName": "Rendering Mode",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Selected Product Label Url",
+              "displayName": "Selected Product Label Url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Product Label Rule",
+              "displayName": "Product Label Rule",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Serving Format",
+              "displayName": "Serving Format",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Forbidden Visuals",
+              "displayName": "Forbidden Visuals",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Product_Type",
+              "displayName": "Product_Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Rendering_Mode",
+              "displayName": "Rendering_Mode",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Selected_Product_Label_URL",
+              "displayName": "Selected_Product_Label_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Product_Label_Rule",
+              "displayName": "Product_Label_Rule",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Serving_Format",
+              "displayName": "Serving_Format",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Forbidden_Visuals",
+              "displayName": "Forbidden_Visuals",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Product Visual Identity",
+              "displayName": "Product Visual Identity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Product Color Direction",
+              "displayName": "Product Color Direction",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Packaging Photography Style",
+              "displayName": "Packaging Photography Style",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Product Priority Type",
+              "displayName": "Product Priority Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1920,
+        0
+      ],
+      "id": "5b561c07-9ee4-4ea1-9c14-8d81fd84dc63",
+      "name": "Append row in sheet"
+    },
+    {
+      "parameters": {
+        "formTitle": "Social Media Content Engine",
+        "formDescription": "Enter the details to generate your 2026 content strategy.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "When should the campaign start?",
+              "fieldType": "date",
+              "fieldName": "startDate"
+            },
+            {
+              "fieldLabel": "When should the campaign end?",
+              "fieldType": "date",
+              "fieldName": "endDate"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        0,
+        0
+      ],
+      "id": "6a5cb253-72a1-481a-92a9-bdbcbcdf6965",
+      "name": "On form submission1"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3.1-flash-image-preview",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3.1-flash-image-preview (Nano Banana 2)"
+        },
+        "prompt": "=={{ $json.Image_Prompt }}\n\nCreate a premium raw advertising image for Aquafoundry.\n\nThis is NOT the final ad.\nThis image will later receive typography, logo, mascot, and sometimes an exact product label.\n\n--------------------------------------------------\nCAMPAIGN CONTEXT\n--------------------------------------------------\n\nAd Focus:\n{{ $json.Ad_Focus }}\n\nProduct Focus:\n{{ $json.Product_Focus }}\n\nProduct Type:\n{{ $json.Product_Type }}\n\nRendering Mode:\n{{ $json.Rendering_Mode }}\n\nServing Format:\n{{ $json.Serving_Format }}\n\nForbidden Visuals:\n{{ $json.Forbidden_Visuals }}\n\nProduct Label Rule:\n{{ $json.Product_Label_Rule }}\n\nSelected Design Reference:\n{{ $json.Selected_Design_Reference_ID }}\n\nDesign Reference Style:\n{{ $json.Design_Reference_Style }}\n\nComposition Direction:\n{{ $json.Composition_Direction }}\n\nCreative Direction:\n{{ $json.Creative_Direction }}\n\n--------------------------------------------------\nSTRICT PRODUCT VISUAL TRUTH\n--------------------------------------------------\n\nProduct Visual Identity:\n{{ $json.Product_Visual_Identity }}\n\nProduct Color Direction:\n{{ $json.Product_Color_Direction }}\n\nPackaging Photography Style:\n{{ $json.Packaging_Photography_Style }}\n\nProduct Priority Type:\n{{ $json.Product_Priority_Type }}\n\nThe image MUST visually follow Product Visual Identity exactly.\n\nUse Product Color Direction exactly:\n{{ $json.Product_Color_Direction }}\n\nUse Packaging Photography Style exactly:\n{{ $json.Packaging_Photography_Style }}\n\nDo not guess the product appearance.\nDo not reinterpret the product category.\n\n--------------------------------------------------\nRENDERING MODE RULES\n--------------------------------------------------\n\nIf Rendering_Mode is creative_food_scene:\n- create a natural food/product scene\n- do not force packaging\n- salads may be shown as bowls, plates, harvest scenes, flatlays, or lifestyle food photography\n- fresh produce may be shown naturally\n- keep the scene appetizing, premium, and realistic\n\nIf Rendering_Mode is packaging_locked:\n- create a realistic packaged product scene\n- use the specified Serving Format\n- create a jar, bottle, pouch, or package as needed\n- create a clean blank label area on the product\n- leave space for the exact uploaded product label to be applied later\n- do NOT generate label text\n- do NOT generate fake product names\n- do NOT generate fake packaging typography\n- do NOT create salad bowl as hero if forbidden\n\n--------------------------------------------------\nSTRICT PRODUCT CATEGORY LOCK\n--------------------------------------------------\n\nThe generated product MUST visually match Product Type exactly.\n\nAllowed mappings:\n\n- sauce → thick tomato/herb sauce in sauce jar only\n- pesto → thick green pesto spread in pesto jar only\n- salad → salad bowl, plate, or fresh produce scene only\n- dressing → dressing bottle only\n- juice → beverage bottle only\n\nNever visually transform:\n- sauce into juice\n- pesto into smoothie\n- pesto into drink\n- salad into sauce\n- dressing into pesto\n- jar product into beverage bottle\n\nIf Product_Type is:\n- sauce → use red/orange tomato-based tones\n- pesto → use thick green pesto texture\n- salad → use fresh leafy produce\n- dressing → use liquid dressing consistency\n\nThe image must visually communicate the correct food category immediately.\n\nRespect Forbidden Visuals:\n{{ $json.Forbidden_Visuals }}\n\n--------------------------------------------------\nAQUAPONICS VISUAL CONTROL\n--------------------------------------------------\n\nDo NOT force aquaponics systems into every image.\n\nIf Product Priority Type is packaged_food:\n- focus on premium packaged food advertising\n- aquaponics should be implied through freshness, ingredients, and clean food quality\n- do not show pipes, tanks, grow beds, or hydroponic trays unless Ad Focus is system-focused\n\nIf Ad Focus is system-focused:\n- show the aquaponics/home-growing system clearly and beautifully\n\n--------------------------------------------------\nRAW IMAGE STYLE\n--------------------------------------------------\n\nCreate:\n- realistic premium commercial photography\n- Indian context\n- natural Indian daylight\n- clean negative space\n- strong focal point\n- high-end Instagram ad background\n- product/design-aware composition\n- food/product advertising quality\n- correct product color and texture\n- uncluttered composition\n\n--------------------------------------------------\nSTRICT NEGATIVE RULES\n--------------------------------------------------\n\nNo text.\nNo words.\nNo letters.\nNo logo.\nNo mascot.\nNo CTA.\nNo readable product labels.\nNo fake packaging text.\nNo posters.\nNo banners.\nNo UI.\nNo typography.\nNo wrong product category.\nNo beverage bottle unless Product_Type is juice.\nNo green juice unless Product_Type is juice.\nNo salad bowl as hero for sauce/pesto.\n\nvariation {{ $json.Row_ID }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        1120,
+        320
+      ],
+      "id": "2fe77a82-d5c7-46ca-bcd1-3b9e0b4a73ee",
+      "name": "Generate an image",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.Selected_Mascot_URL }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "mascot"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2016,
+        320
+      ],
+      "id": "6385144d-cc7d-4cf7-8c42-786c38b069a3",
+      "name": "Get Mascot File"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.Selected_Logo_URL }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "logo"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2464,
+        320
+      ],
+      "id": "3e711263-24fc-41f0-b9ab-22f6e1859922",
+      "name": "Get Logo File"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const original = $item(0).$node[\"Parse Asset Decision\"].json;\n\nconst binaryKeys = Object.keys($binary || {});\n\nif (binaryKeys.length === 0) {\n  throw new Error(\"No binary image found from Gemini edit node\");\n}\n\nconst firstKey = binaryKeys[0];\nconst editedImage = $binary[firstKey];\n\nreturn {\n  json: {\n    ...original\n  },\n  binary: {\n    data: {\n      ...editedImage,\n      fileName: `${original.Row_ID}.jpg`,\n      mimeType: \"image/jpeg\"\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3808,
+        320
+      ],
+      "id": "1814861a-1c07-47f9-925d-ce3bf6f3ab58",
+      "name": "Normalize Gemini Edited Image"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const original = $item(0).$node[\"Parse Asset Decision\"].json;\n\nreturn {\n  json: {\n    ...original\n  },\n  binary: {\n    ...$binary\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4032,
+        320
+      ],
+      "id": "4de0f7e6-88d4-4a68-a1bd-d656f762ad42",
+      "name": "jpeg to bin"
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = \"https://YOUR_PROJECT.supabase.co/storage/v1/object/public/aquaponics-media/assets\";\n\nconst productRows = $input.all().map(item => item.json);\n\nconst products = productRows\n  .filter(row => {\n    return String(row.Asset_Type || \"\").toLowerCase() === \"product\" &&\n           String(row.Status || \"\").toLowerCase() === \"active\";\n  })\n  .map(row => ({\n    id: row.Asset_ID,\n    url: row.Asset_URL,\n    name: row.Product_Category || row.Asset_ID,\n\n    product_type: row.Product_Type || \"\",\n    rendering_mode: row.Rendering_Mode || \"creative_food_scene\",\n    label_url: row.Label_URL || \"\",\n    label_rule: row.Label_Rule || \"\",\n    serving_format: row.Serving_Format || \"\",\n    forbidden_visuals: row.Forbidden_Visuals || \"\",\n\n    product_visual_identity: row.Product_Visual_Identity || \"\",\n    product_color_direction: row.Product_Color_Direction || \"\",\n    packaging_photography_style: row.Packaging_Photography_Style || \"\",\n    product_priority_type: row.Product_Priority_Type || \"\",\n\n    visual_description: row.Visual_Description || \"\",\n    best_for: row.Best_For || \"\",\n    prompt_guidance: row.Prompt_Guidance || \"\"\n  }));\n\nif (!products.length) {\n  throw new Error(\"No active product assets found in Asset_Catalog sheet\");\n}\n\nreturn {\n  Asset_Catalog: {\n    products,\n\n    design_references: [\n      {\n        id: \"design\",\n        url: `${base}/designs/design.png`,\n        style_name: \"Bold food product poster\",\n        style_guidance: \"Large bold hero headline, expressive accent script for one phrase, product-first food photography, clean logo placement, feature/review cards, sticker-style CTA, energetic premium Instagram food/product ad feel.\"\n      },\n      {\n        id: \"design1\",\n        url: `${base}/designs/design1.png`,\n        style_name: \"Split color-block fresh food ad\",\n        style_guidance: \"Strong color blocking, bold playful display typography, fresh produce framing, large central product/food visual, expressive headline composition, high-energy social media ad style.\"\n      },\n      {\n        id: \"design2\",\n        url: `${base}/designs/design2.png`,\n        style_name: \"Editorial chalkboard information card\",\n        style_guidance: \"Dark editorial background, structured info sections, ingredient/product education layout, hand-drawn accent typography, clean section dividers, premium educational food/product post style.\"\n      }\n    ],\n\n    logos: [\n      {\n        id: \"logo1\",\n        url: `${base}/logos/logo1.png`,\n        usage: \"best for light and clean backgrounds\"\n      },\n      {\n        id: \"logo2\",\n        url: `${base}/logos/logo2.png`,\n        usage: \"best for darker or image-heavy backgrounds\"\n      }\n    ],\n\n    mascots: [\n      {\n        id: \"mascot1\",\n        url: `${base}/mascots/mascot1.png`,\n        action: \"friendly brand presence\"\n      },\n      {\n        id: \"mascot2\",\n        url: `${base}/mascots/mascot2.png`,\n        action: \"product interaction or explanation\"\n      },\n      {\n        id: \"mascot3\",\n        url: `${base}/mascots/mascot3.png`,\n        action: \"freshness, harvest, lifestyle, energetic CTA\"\n      }\n    ]\n  },\n\n  Product_Strategy_Context: `\nThe product catalog contains analyzed visual descriptions and product rendering rules.\n\nThere are two rendering modes:\n\n1. creative_food_scene\nUse for salads, fresh produce, harvest scenes, plated food, bowls, and produce-forward ads.\nThese do NOT require label compositing.\nDo not force packaging for these products.\n\n2. packaging_locked\nUse for pesto, dressing, sauces, jars, bottles, and packaged products.\nThese MUST use the provided exact product label later in final edit.\nThe raw image should create blank packaging or a clean label placement area.\nDo not generate fake label text.\n\nFor every product, use:\n- product_type\n- rendering_mode\n- label_url\n- label_rule\n- serving_format\n- forbidden_visuals\n- visual_description\n- best_for\n- prompt_guidance\n\nFor product-focused posts:\n- use the selected product's visual_description\n- use the selected product's prompt_guidance\n- respect rendering_mode\n- respect forbidden_visuals\n- do not default to generic aquaponics systems\n- do not default to loose greens only\n`,\n\n  Design_Strategy_Context: `\nUse the design references to guide premium Instagram ad style:\n- expressive food/product typography\n- clean spacing\n- strong hierarchy\n- product-first layout\n- modern DTC ad feel\n- premium green/blue/white mood\n- professional paid-ad style\n- feature chips/cards\n- strong CTA treatment\n`,\n\n  Logo_Mascot_Selection_Context: `\nDo not select logo or mascot during strategy generation.\nLogo and mascot will be selected later after the raw image is generated.\n`\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "1f87eac3-7c08-4698-8e47-c3cec2edae59",
+      "name": "Build Asset Catalog + Brand Context"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const base = \"https://YOUR_PROJECT.supabase.co/storage/v1/object/public/aquaponics-media/assets\";\n\nreturn {\n  ...$json,\n\n  Asset_Catalog: {\n    logos: [\n      {\n        id: \"logo1\",\n        url: `${base}/logos/logo1.png`,\n        usage: \"best for light and clean backgrounds\"\n      },\n      {\n        id: \"logo2\",\n        url: `${base}/logos/logo2.png`,\n        usage: \"best for darker or image-heavy backgrounds\"\n      }\n    ],\n\n    mascots: [\n      {\n        id: \"mascot1\",\n        url: `${base}/mascots/mascot1.png`,\n        action: \"friendly brand presence\"\n      },\n      {\n        id: \"mascot2\",\n        url: `${base}/mascots/mascot2.png`,\n        action: \"product interaction or explanation\"\n      },\n      {\n        id: \"mascot3\",\n        url: `${base}/mascots/mascot3.png`,\n        action: \"freshness, harvest, lifestyle, energetic CTA\"\n      }\n    ]\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        256
+      ],
+      "id": "6ce57e71-9298-411f-90fc-5b6ce6b1b54c",
+      "name": "Build Runtime Asset Catalog"
+    },
+    {
+      "parameters": {
+        "jsCode": "const original = $item(0).$node[\"Build Runtime Asset Catalog\"].json;\n\nconst binaryKeys = Object.keys($binary || {});\n\nif (binaryKeys.length === 0) {\n  throw new Error(\"No generated image binary found\");\n}\n\nconst firstKey = binaryKeys[0];\n\nreturn {\n  json: {\n    ...original\n  },\n  binary: {\n    raw_image: {\n      ...$binary[firstKey],\n      fileName: `${original.Row_ID}-raw.jpg`,\n      mimeType: \"image/jpeg\"\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        320
+      ],
+      "id": "e9c78f8d-964f-4c31-a63b-5a9a37244838",
+      "name": "Preserve Raw Image"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-flash-latest",
+          "mode": "list",
+          "cachedResultName": "models/gemini-flash-latest"
+        },
+        "text": "=You are an AI Creative Director for Aquafoundry.\n\nAnalyze:\n1. The generated raw image.\n2. The campaign details.\n3. The available logo and mascot catalog.\n\n--------------------------------------------------\nCAMPAIGN\n--------------------------------------------------\n\nHeadline:\n{{ $json.Headline }}\n\nSubheadline:\n{{ $json.Subheadline }}\n\nCTA:\n{{ $json.CTA }}\n\nFeatures:\n{{ $json.Features }}\n\nAd Focus:\n{{ $json.Ad_Focus }}\n\nProduct Focus:\n{{ $json.Product_Focus }}\n\nDesign Reference Style:\n{{ $json.Design_Reference_Style }}\n\nComposition Direction:\n{{ $json.Composition_Direction }}\n\nMascot Action:\n{{ $json.Mascot_Action }}\n\n--------------------------------------------------\nASSET CATALOG\n--------------------------------------------------\n\n{{ JSON.stringify($json.Asset_Catalog) }}\n\n--------------------------------------------------\nTASK\n--------------------------------------------------\n\nChoose the best logo and mascot for this specific raw image.\n\nRules:\n- choose only one logo\n- choose only one mascot\n- choose based on lighting, negative space, composition, product focus, and storytelling fit\n- logo and mascot are compulsory\n- mascot should support the ad, not dominate it\n- mascot must feel naturally blended later\n\nReturn ONLY valid JSON:\n\n{\n  \"selected_logo_url\": \"...\",\n  \"selected_mascot_url\": \"...\",\n  \"creative_strategy\": \"...\",\n  \"product_usage_direction\": \"...\",\n  \"design_usage_direction\": \"...\",\n  \"mascot_scene_direction\": \"...\"\n}",
+        "inputType": "binary",
+        "binaryPropertyName": "raw_image",
+        "simplify": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        1568,
+        320
+      ],
+      "id": "a78cca8d-c888-44b5-a6d5-083d0ed43622",
+      "name": "Analyze an image"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const original = $item(0).$node[\"Preserve Raw Image\"].json;\nconst rawBinary = $item(0).$node[\"Preserve Raw Image\"].binary.raw_image;\n\nlet raw =\n  $json.candidates?.[0]?.content?.parts?.[0]?.text ||\n  $json.content?.parts?.[0]?.text ||\n  $json.text ||\n  \"\";\n\nif (!raw) {\n  throw new Error(\"No text found in Analyze response:\\n\" + JSON.stringify($json, null, 2));\n}\n\nraw = String(raw)\n  .replace(/```json/gi, \"\")\n  .replace(/```/g, \"\")\n  .trim();\n\nconst jsonMatch = raw.match(/\\{[\\s\\S]*\\}/);\n\nif (!jsonMatch) {\n  throw new Error(\"No JSON object found:\\n\" + raw);\n}\n\nlet parsed;\n\ntry {\n  parsed = JSON.parse(jsonMatch[0]);\n} catch (error) {\n  throw new Error(\"Invalid asset decision JSON:\\n\" + raw);\n}\n\nif (!parsed.selected_logo_url || !parsed.selected_mascot_url) {\n  throw new Error(\"Asset decision missing selected logo or mascot:\\n\" + raw);\n}\n\nreturn {\n  json: {\n    ...original,\n\n    Selected_Logo_URL: String(parsed.selected_logo_url || \"\").trim(),\n    Selected_Mascot_URL: String(parsed.selected_mascot_url || \"\").trim(),\n\n    Creative_Strategy: parsed.creative_strategy || \"\",\n    Product_Usage_Direction: parsed.product_usage_direction || \"\",\n    Design_Usage_Direction: parsed.design_usage_direction || \"\",\n    Mascot_Scene_Direction: parsed.mascot_scene_direction || \"\"\n  },\n  binary: {\n    raw_image: rawBinary\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        320
+      ],
+      "id": "17495a92-6ddf-4711-8dd1-a9231b3101df",
+      "name": "Parse Asset Decision"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const original = $item(0).$node[\"Parse Asset Decision\"].json;\nconst previousBinary = $item(0).$node[\"Parse Asset Decision\"].binary;\n\nreturn {\n  json: {\n    ...original\n  },\n  binary: {\n    ...previousBinary,\n    ...$binary\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        320
+      ],
+      "id": "fb9389a9-5f0f-42de-a18b-6a1e77ce3f8c",
+      "name": "Restore After Mascot"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const original = $item(0).$node[\"Parse Asset Decision\"].json;\nconst previousBinary = $item(0).$node[\"Restore After Mascot\"].binary;\n\nreturn {\n  json: {\n    ...original\n  },\n  binary: {\n    ...previousBinary,\n    ...$binary\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2688,
+        320
+      ],
+      "id": "8827375f-e369-4a84-9c3e-a69f7b81ffd9",
+      "name": "Restore After Logo"
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = \"https://YOUR_PROJECT.supabase.co/storage/v1/object/public/aquaponics-media/assets\";\n\nconst assets = [\n  {\n    id: \"basil_pesto\",\n    productImage: \"product.png\",\n    label: \"basil-pesto.png\",\n    productType: \"pesto\",\n    serving: \"glass jar\"\n  },\n  {\n    id: \"basil_tomato_sauce\",\n    productImage: \"product1.png\",\n    label: \"basil-tamato-sauce.png\",\n    productType: \"sauce\",\n    serving: \"glass jar\"\n  },\n  {\n    id: \"celery_pesto\",\n    productImage: \"product2.png\",\n    label: \"celery-pesto.png\",\n    productType: \"pesto\",\n    serving: \"glass jar\"\n  },\n  {\n    id: \"chard_parsley_tomato_sauce\",\n    productImage: \"product3.png\",\n    label: \"chard-parsley-tomato-sauce.png\",\n    productType: \"sauce\",\n    serving: \"glass jar\"\n  },\n  {\n    id: \"chard_pesto\",\n    productImage: \"product4.png\",\n    label: \"chard-pesto.png\",\n    productType: \"pesto\",\n    serving: \"glass jar\"\n  },\n  {\n    id: \"kale_basil_tomato_sauce\",\n    productImage: \"product.png\",\n    label: \"kale-basil-tamato-sauce.png\",\n    productType: \"sauce\",\n    serving: \"glass jar\"\n  },\n  {\n    id: \"rocket_pesto\",\n    productImage: \"product1.png\",\n    label: \"rocket-pesto.png\",\n    productType: \"pesto\",\n    serving: \"glass jar\"\n  },\n  {\n    id: \"tuscan_herb_tomato_sauce\",\n    productImage: \"product2.png\",\n    label: \"tuscan-herb-tomato-sauce.png\",\n    productType: \"sauce\",\n    serving: \"glass jar\"\n  }\n];\n\nreturn assets.map(asset => ({\n  json: {\n    Asset_ID: asset.id,\n    Asset_Type: \"product\",\n    File_Name: asset.productImage,\n    Asset_URL: `${base}/products/${asset.productImage}`,\n    Product_Type: asset.productType,\n    Rendering_Mode: \"packaging_locked\",\n    Label_URL: `${base}/labels/${asset.label}`,\n    Label_Rule: `Use the exact uploaded ${asset.id.replaceAll(\"_\", \" \")} label. Do not recreate, rewrite, redesign, crop, or modify the label.`,\n    Serving_Format: asset.serving,\n    Forbidden_Visuals: \"salad bowl as main product, dressing bottle, fake label text, wrong product label, wrong product category\"\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        640
+      ],
+      "id": "b475d7f8-d8be-4840-9f3f-2ca7214264b4",
+      "name": "Build Product Image List"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.Asset_URL }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "product_image"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        224,
+        640
+      ],
+      "id": "1a264665-9f71-45ea-adfa-209ab9670f05",
+      "name": "Get Product Image"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "text": "=You are a senior product advertising strategist for Aquafoundry.\n\nAnalyze the uploaded product/reference image.\n\nYour job is to convert this image into a clear text description that can later help another AI model create product-centered Instagram ads.\n\nDo NOT describe it vaguely.\n\nFocus on:\n- what product or product group is visible\n- shape and structure\n- colors\n- materials\n- packaging or layout\n- produce/greens/herbs visible\n- aquaponics/home-growing elements\n- how this product could appear in a premium ad\n- what ad types this reference is best for\n\nReturn ONLY valid JSON:\n\n{\n  \"visual_description\": \"Detailed visual description of the product/reference image in 2-4 sentences.\",\n  \"product_category\": \"Short category name, e.g. compact balcony aquaponics system, leafy greens product, herb grow kit, product menu, produce basket, etc.\",\n  \"best_for\": \"Best ad use cases, e.g. product hero ads, lifestyle ads, educational ads, freshness ads, offer ads.\",\n  \"prompt_guidance\": \"Clear guidance for future image prompts. Explain how to use this product/reference in raw image generation without creating generic aquaponics-only visuals.\"\n}",
+        "inputType": "binary",
+        "binaryPropertyName": "product_image",
+        "simplify": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        640
+      ],
+      "id": "c479a1af-7f0b-4f27-902a-f5d7e92e71ae",
+      "name": "Analyze an image1"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "let raw =\n  $json.candidates?.[0]?.content?.parts?.[0]?.text ||\n  $json.content?.parts?.[0]?.text ||\n  $json.text ||\n  \"\";\n\nraw = String(raw)\n  .replace(/```json/gi, \"\")\n  .replace(/```/g, \"\")\n  .trim();\n\nconst jsonMatch = raw.match(/\\{[\\s\\S]*\\}/);\n\nif (!jsonMatch) {\n  throw new Error(\"No JSON found in product analysis:\\n\" + raw);\n}\n\nlet parsed;\n\ntry {\n  parsed = JSON.parse(jsonMatch[0]);\n} catch (error) {\n  throw new Error(\"Invalid product analysis JSON:\\n\" + raw);\n}\n\n// IMPORTANT: this gets the CURRENT paired item, not item 0\nconst original = $(\"Build Product Image List\").item.json;\n\nreturn {\n  json: {\n    Asset_ID: original.Asset_ID,\n    Asset_Type: original.Asset_Type,\n    Asset_URL: original.Asset_URL,\n\n    Visual_Description: parsed.visual_description || \"\",\n    Product_Category: parsed.product_category || \"\",\n    Best_For: parsed.best_for || \"\",\n    Prompt_Guidance: parsed.prompt_guidance || \"\",\n\n    Product_Type: original.Product_Type,\n    Rendering_Mode: original.Rendering_Mode,\n    Label_URL: original.Label_URL,\n    Label_Rule: original.Label_Rule,\n    Serving_Format: original.Serving_Format,\n    Forbidden_Visuals: original.Forbidden_Visuals,\n\n    Status: \"active\"\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        640
+      ],
+      "id": "e4c47b27-d8a6-45e3-96a6-295cde188d84",
+      "name": "Parse Product Description"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Asset_Catalog",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Asset_ID",
+              "displayName": "Asset_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Asset_Type",
+              "displayName": "Asset_Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Asset_URL",
+              "displayName": "Asset_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Visual_Description",
+              "displayName": "Visual_Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Product_Category",
+              "displayName": "Product_Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Best_For",
+              "displayName": "Best_For",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Prompt_Guidance",
+              "displayName": "Prompt_Guidance",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Product_Type",
+              "displayName": "Product_Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Rendering_Mode",
+              "displayName": "Rendering_Mode",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Label_URL",
+              "displayName": "Label_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Label_Rule",
+              "displayName": "Label_Rule",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Serving_Format",
+              "displayName": "Serving_Format",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Forbidden_Visuals",
+              "displayName": "Forbidden_Visuals",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        896,
+        640
+      ],
+      "id": "6cef1f60-fc9d-46e8-8b07-cea0b092f244",
+      "name": "Append row in sheet1"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Asset_Catalog",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Asset_Type",
+              "lookupValue": "product"
+            },
+            {
+              "lookupColumn": "Status",
+              "lookupValue": "active"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        896,
+        0
+      ],
+      "id": "c9c1f17b-158c-4153-bd95-a37c5519758a",
+      "name": "Get Product Asset Catalog"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f3ff866b-8a1f-4510-9721-374a7a9ae285",
+              "leftValue": "={{ $json.Rendering_Mode }}",
+              "rightValue": "packaging_locked",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2912,
+        320
+      ],
+      "id": "5d0cf839-d71b-49f8-a30d-e11d90026169",
+      "name": "Is Packaging Locked?"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const original = $item(0).$node[\"Parse Asset Decision\"].json;\nconst previousBinary = $item(0).$node[\"Restore After Logo\"].binary;\n\nreturn {\n  json: {\n    ...original\n  },\n  binary: {\n    ...previousBinary,\n    ...$binary\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3360,
+        224
+      ],
+      "id": "0a531055-0515-45f4-8a19-6157603f719d",
+      "name": "Restore After Product Label"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "edit",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3.1-flash-image-preview",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3.1-flash-image-preview (Nano Banana 2)"
+        },
+        "prompt": "=Transform this raw Aquafoundry image into a premium Instagram ad creative.\n\nUse only:\n- uploaded raw image\n- uploaded logo\n- uploaded mascot\n\nDo NOT add product/design reference images here.\nThe product and design direction is already baked into the raw image and campaign context.\n\n--------------------------------------------------\nPRIMARY ROLE\n--------------------------------------------------\n\nYou are acting as:\n- a premium ad compositor\n- a modern DTC food-brand designer\n- a commercial typography art director\n\nYour job is to:\n- preserve the raw image\n- preserve the uploaded logo identity\n- preserve the uploaded mascot identity\n- create premium expressive typography\n- add headline, features, and CTA\n- create a polished Instagram ad\n\nYour job is NOT to:\n- redesign the mascot\n- redesign the logo\n- invent new brand assets\n- recreate the product\n- change the product concept\n- create a new mascot character\n- create a new logo treatment\n- force product labels or packaging\n\n--------------------------------------------------\nASSET PRESERVATION RULES\n--------------------------------------------------\n\nThe uploaded logo and uploaded mascot are exact brand assets.\n\nDo NOT:\n- redesign them\n- redraw them\n- change mascot character identity\n- create a new mascot\n- change mascot face, body, cap, colors, clothing, or style\n- generate a different vegetable character\n- turn the logo into a signboard, black box, sticker, badge, or glowing graphic\n- add extra logo backgrounds unless the uploaded logo already has one\n- add extra logos\n- duplicate the logo\n- duplicate the mascot\n\nAllowed adjustments:\n- resize\n- reposition\n- slight brightness/contrast adjustment\n- slight shadow for natural blending\n- slight perspective adjustment if needed\n\n--------------------------------------------------\nCAMPAIGN\n--------------------------------------------------\n\nHeadline:\n\"{{ $json.Headline }}\"\n\nFeatures:\n\"{{ $json.Features }}\"\n\nCTA:\n\"{{ $json.CTA }}\"\n\nAd Focus:\n{{ $json.Ad_Focus }}\n\nProduct Focus:\n{{ $json.Product_Focus }}\n\nDesign Reference Style:\n{{ $json.Design_Reference_Style }}\n\nCreative Strategy:\n{{ $json.Creative_Strategy }}\n\nProduct Usage Direction:\n{{ $json.Product_Usage_Direction }}\n\nDesign Usage Direction:\n{{ $json.Design_Usage_Direction }}\n\nMascot Scene Direction:\n{{ $json.Mascot_Scene_Direction }}\n\n--------------------------------------------------\nRAW IMAGE RULES\n--------------------------------------------------\n\nPreserve the raw image as the main visual foundation.\n\nDo NOT:\n- replace the raw image\n- heavily repaint the product\n- change the product category\n- turn the scene into a fantasy render\n- make the product look fake\n- over-stylize the image\n- add unnecessary objects\n- add extra product images\n- make the background cartoonish\n- force packaging\n- add product labels\n\nAllowed:\n- subtle lighting polish\n- subtle contrast improvement\n- subtle depth enhancement\n- tasteful crop/positioning for ad layout\n- clean space management for typography\n\nThe product or scene already exists in the raw image. Respect it.\n\n--------------------------------------------------\nTEXT CONTENT\n--------------------------------------------------\n\nUse exactly this text only.\n\nHeadline:\n\"{{ $json.Headline }}\"\n\nFeatures:\n\"{{ $json.Features }}\"\n\nCTA:\n\"{{ $json.CTA }}\"\n\nDo NOT:\n- invent extra words\n- add extra claims\n- add fake discounts\n- add brand slogans unless already provided\n- add random labels\n- change spelling\n\n--------------------------------------------------\nTYPOGRAPHY ART DIRECTION\n--------------------------------------------------\n\n\n\nTypography should feel:\n- premium\n- clean\n- modern\n- editorial\n- highly readable\n- professionally art-directed\n\nTypography should resemble:\n- premium beverage campaigns\n- luxury wellness brands\n- modern food DTC startups\n- premium Instagram paid ads\n\nUse:\n- oversized hero words\n- layered hierarchy\n- expressive scaling\n- asymmetrical editorial balance\n- modern spacing rhythm\n- bold expressive headline typography\n- strong hierarchy\n- dynamic text sizing\n- layered typography composition\n- stylish feature chips/cards\n- premium CTA sticker/button treatment\n- modern editorial spacing\n- clean premium alignment\n\nUse:\n- Graviola Regular for headlines\n- current existing clean sans-serif font for features\n- semi-bold Nunito Sans for CTA\n\nHeadline styling should feel:\n- bold\n- premium\n- expressive\n- playful but refined\n- high-end DTC food branding\n- visually dominant\n\nFeatures should remain:\n- highly readable\n- modern\n- clean\n- minimal\n- commercially designed\n\nAvoid:\n- decorative fonts\n- handwritten fonts\n- warped text\n- curved text\n- neon effects\n- glowing text\n- playful typography\n- tiny unreadable text\n- excessive outlines\n- cluttered text blocks\n- poster-style centered layouts\n- excessive text density\n- plain centered text\n- Canva template style\n- presentation slide layouts\n- boring white text overlays\n\n--------------------------------------------------\nTEXT HIERARCHY\n--------------------------------------------------\n\nMaintain this hierarchy:\n\nheadline > CTA > features > mascot > logo\n\nRules:\n- headline must be the dominant text element\n- CTA must be clear, premium, and action-oriented\n- features must be readable but secondary\n- text must be placed only in clean readable areas\n- do not place important text over busy product details\n- keep enough breathing room around text\n\n--------------------------------------------------\nFEATURE STYLING\n--------------------------------------------------\n\nFeatures are provided as one string:\n\n\"{{ $json.Features }}\"\n\nDisplay them cleanly.\n\nFeatures should be professionally styled as:\n- premium feature chips\n- mini ingredient cards\n- elegant icon-style bullets\n- modern food-brand labels\n- clean commercial feature row\n- three short feature chips\n- one polished feature row with separators\n\nTypography containers should feel premium and designed.\n\nUse:\n- soft gradient panels\n- glassmorphism cards\n- subtle blur overlays\n- premium rounded chips\n- layered translucent panels\n- elegant editorial blocks\n- modern DTC UI-inspired styling\n\nBackground containers should:\n- improve readability\n- enhance composition\n- feel integrated into the photography\n- never look like basic rectangles\n\nAvoid:\n- plain white boxes\n- flat Canva-style text backgrounds\n- harsh opaque rectangles\n- plain text paragraphs\n- stacked boring bullet lists\n- tiny unreadable text blocks\n\nDo not make features too large.\nDo not overpower the headline.\nDo not add extra feature points.\n\n--------------------------------------------------\nCTA\n--------------------------------------------------\n\nCTA text:\n\"{{ $json.CTA }}\"\n\nMake CTA:\n- clean\n- modern\n- readable\n- premium\n- button, pill, sticker, or refined label style\n- high contrast but not loud\n\nUse semi-bold Nunito Sans for CTA.\n\nDo NOT:\n- make CTA cartoonish\n- use neon/glow effects\n- add extra CTA words\n\n--------------------------------------------------\nCOLOR DIRECTION\n--------------------------------------------------\n\nUse a color palette matching the actual product/category and raw image.\n\nExamples:\n- salads → vibrant fresh produce tones\n- produce → fresh greens and natural food colors\n- systems → clean green, aqua blue, white, and soft neutral tones\n- lifestyle → warm Indian daylight, natural cream, soft green accents\n\nAquafoundry greens/blues should act as supporting accents only.\nDo not overpower the actual food/category colors.\n\n--------------------------------------------------\nLOGO\n--------------------------------------------------\n\nUse uploaded logo exactly once.\n\nPlace the logo in the top-left corner only.\n\nThe logo should:\n- remain small\n- remain subtle\n- align cleanly with typography\n- maintain consistent spacing from edges\n- feel premium and intentional\n- remain recognizable\n- be clean\n- be readable\n\nAllowed:\n- resize\n- place naturally\n- slightly adapt brightness for readability\n\nDo NOT:\n- redesign logo\n- duplicate logo\n- distort logo\n- change logo colors\n- add black box\n- add glow\n- create a fake signboard\n- turn logo into a badge/sticker\n- place logo on products\n- place logo beside mascot\n- place logo in center\n- place logo at bottom\n- place logo floating randomly\n- use logo on mascot cap unless already present in uploaded mascot\n\n--------------------------------------------------\nMASCOT\n--------------------------------------------------\n\nUse uploaded mascot only.\n\nThe mascot must remain the exact uploaded mascot.\n\nDo NOT:\n- redesign mascot\n- create a new mascot\n- change mascot proportions\n- change mascot species\n- change mascot face\n- change mascot body type\n- change mascot outfit\n- change mascot colors\n- make it look like a different vegetable/cartoon character\n- create floating mascot\n- place mascot in air\n- place mascot mid-jump\n- make mascot hover\n- create magical/fantasy positioning\n- duplicate mascot\n\nMascot must:\n- stand on a real visible surface\n- physically interact with environment correctly\n- cast realistic contact shadow\n- obey gravity\n- occupy maximum 5% visual weight\n- remain secondary\n- support the story\n- not block text\n- not block product\n- not overpower the ad\n\nAllowed mascot placement:\n- standing beside product\n- sitting on shelf\n- sitting on counter\n- leaning near typography\n- standing near feature cards\n- standing beside CTA\n\nNot allowed:\n- floating\n- flying\n- watering invisible objects\n- hovering near text\n- floating beside logo\n- giant mascot\n- centered mascot\n- mascot as main hero object\n- random sticker placement\n\nIf mascot interaction is unclear:\nplace mascot naturally beside the product instead of forcing action.\n\nMascot direction:\n{{ $json.Mascot_Scene_Direction }}\n\nIf the mascot action does not make physical or compositional sense,\nprioritize natural grounded placement over forced action.\n\n--------------------------------------------------\nCOMPOSITION\n--------------------------------------------------\n\nCreate a clean premium ad composition.\n\nUse:\n- available negative space\n- natural visual flow\n- product-first hierarchy\n- clear typography zones\n- modern spacing\n- balanced logo and mascot placement\n- breathing room\n- strong visual hierarchy\n\nPriority order:\n1. product/scene\n2. headline\n3. CTA\n4. features\n5. mascot\n6. logo\n\nDo NOT:\n- overcrowd the image\n- place everything in the center\n- cover the product\n- cover important food/produce details\n- add unnecessary panels everywhere\n- create a collage\n- make the design look like a cheap poster\n- create flat boring text backgrounds\n\nThe ad should feel custom-designed for this raw image.\n\nRendering Mode:\n{{ $json.Rendering_Mode }}\n\nThis is a creative food scene.\nDo not force packaging or product labels.\nIf the product is salad or fresh produce, preserve the natural food photography style.\n\n--------------------------------------------------\nSTRICT OUTPUT RULES\n--------------------------------------------------\n\n- Use exact text only\n- Text must be correctly spelled\n- Do not invent extra text\n- Do not distort typography\n- Do not duplicate logo\n- Do not duplicate mascot\n- Do not redesign logo\n- Do not redesign mascot\n- Do not create a new mascot\n- Do not turn logo into a black signboard or badge\n- Keep design uncluttered\n- Preserve realism of the raw image\n- Preserve product focus\n- Preserve brand asset identity\n- Final output should look like a premium paid Instagram ad created by a senior designer",
+        "images": {
+          "values": [
+            {
+              "binaryPropertyName": "raw_image"
+            },
+            {
+              "binaryPropertyName": "mascot"
+            },
+            {
+              "binaryPropertyName": "logo"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        3584,
+        416
+      ],
+      "id": "f3fc131c-fa92-42e1-a69c-4108bedfd543",
+      "name": "Edit Image Creative Food Scene"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "edit",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3.1-flash-image-preview",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3.1-flash-image-preview (Nano Banana 2)"
+        },
+        "prompt": "=Transform this raw Aquafoundry image into a premium Instagram ad creative.\n\nUse only:\n\n* uploaded raw image\n* uploaded logo\n* uploaded mascot\n* uploaded product_label\n\n---\n\n## PRIMARY ROLE\n\nYou are acting as:\n\n* a premium packaged-food ad compositor\n* a luxury DTC food-brand designer\n* a commercial typography art director\n\nYour job is to:\n\n* preserve the raw image\n* apply the exact uploaded product_label onto the blank packaging area\n* preserve the uploaded product_label exactly\n* preserve the uploaded logo identity\n* preserve the uploaded mascot identity\n* create premium expressive ad typography\n* add headline, features, and CTA\n* create a clean high-converting Instagram composition\n\n---\n\n## PRODUCT LABEL LOCK\n\nThe uploaded product_label is the ONLY source of truth.\n\nDo NOT:\n\n* redesign it\n* recreate it\n* rewrite it\n* crop out important parts\n* change colors\n* change product name\n* change label typography\n* add fake label text\n* invent product names\n* replace it with a generated label\n\nApply the uploaded product_label naturally onto the blank packaging area of the package.\n\nAllowed:\n\n* resize\n* perspective fit\n* natural curvature warp\n* realistic lighting adaptation\n* subtle shadow blending\n* slight brightness matching\n\nNot allowed:\n\n* changing label design\n* changing label words\n* changing flavor\n* changing brand\n* making a new label\n* making label unreadable\n\nIf multiple jars, bottles, or packages are visible in the composition:\n\n* EVERY visible primary package must use the uploaded label\n* never leave secondary jars blank\n* never mix labeled and unlabeled hero products\n* all visible packages must visually belong to the same product line\n\nAllowed:\n\n* slightly different viewing angles\n* slightly different rotations\n* depth variation\n\nNot allowed:\n\n* blank jars beside labeled jars\n* fake secondary labels\n* inconsistent packaging branding\n\n---\n\n## STRICT PRODUCT CATEGORY LOCK\n\nProduct Type:\n{{ $json.Product_Type }}\n\nProduct Visual Identity:\n{{ $json.Product_Visual_Identity }}\n\nProduct Color Direction:\n{{ $json.Product_Color_Direction }}\n\nPackaging Photography Style:\n{{ $json.Packaging_Photography_Style }}\n\nServing Format:\n{{ $json.Serving_Format }}\n\nProduct Label Rule:\n{{ $json.Product_Label_Rule }}\n\nForbidden Visuals:\n{{ $json.Forbidden_Visuals }}\n\nRespect the product type exactly.\nDo not visually transform this product into another category.\n\nThe final product MUST visually match the uploaded label category exactly.\n\nExamples:\n\n* tomato sauce label → thick rustic tomato sauce visuals only\n* pesto label → thick creamy pesto visuals only\n* salad label → fresh leafy produce visuals only\n\nNever visually confuse:\n\n* pesto with juice\n* sauce with smoothie\n* salad with sauce\n* dressing with pesto\n\nThe internal product texture and consistency must match the label category exactly.\n\nExamples:\n\n* tomato sauce labels MUST contain thick red/orange tomato sauce texture\n* pesto labels MUST contain thick creamy herb pesto texture\n* salad labels MUST contain leafy produce visuals\n* dressing labels MUST contain liquid dressing consistency\n\nNever create:\n\n* green liquid inside tomato sauce packaging\n* smoothie texture for pesto\n* beverage bottle for sauce\n* juice consistency for packaged sauces\n\nThe surrounding food styling must support the uploaded label category.\n\nDo not create visual contradiction between:\n\n* label\n* product texture\n* product color\n* serving style\n\nThe product texture, consistency, serving style, and food color must visually communicate the correct category immediately.\n\nRespect Product Color Direction:\n{{ $json.Product_Color_Direction }}\n\nDo not default to green wellness beverage aesthetics unless Product_Type is actually juice.\n\n---\n\n## CAMPAIGN TEXT\n\nHeadline:\n\"{{ $json.Headline }}\"\n\nFeatures:\n\"{{ $json.Features }}\"\n\nCTA:\n\"{{ $json.CTA }}\"\n\nUse exact text only.\nDo not add extra claims or product names.\n\n---\n\n## TYPOGRAPHY ART DIRECTION\n\nTypography should feel like:\n\n* premium modern DTC food branding\n* luxury wellness advertising\n* high-end Instagram product campaigns\n* expressive editorial food advertising\n\nTypography should resemble:\n\n* premium beverage campaigns\n* luxury wellness brands\n* modern food DTC startups\n* premium Instagram paid ads\n\nUse:\n\n* bold expressive headline typography\n* oversized hero words\n* layered hierarchy\n* expressive scaling\n* asymmetrical editorial balance\n* dynamic text sizing\n* layered typography composition\n* stylish feature chips/cards\n* premium CTA sticker/button treatment\n* modern editorial spacing\n* clean premium alignment\n* highly designed visual rhythm\n\nUse:\n- Graviola Regular for headlines\n- current existing clean sans-serif font for features\n- semi-bold Nunito Sans for CTA\n\nHeadline styling should feel:\n- bold\n- premium\n- expressive\n- playful but refined\n- high-end DTC food branding\n- visually dominant\n\nFeatures should remain:\n- highly readable\n- modern\n- clean\n- minimal\n- commercially designed\n\nThe typography must feel:\n\n* art directed\n* premium\n* modern\n* visually exciting\n* commercial\n* highly intentional\n\nAvoid:\n\n* plain centered text\n* Canva template style\n* presentation slide layouts\n* boring white text overlays\n* too much small text\n* paragraph-style layouts\n* evenly sized text blocks\n* excessive text density\n\nThe typography should complement the product label.\nDo not compete with or cover the label.\n\n---\n\n## FEATURE STYLING\n\nFeatures should be professionally styled as:\n\n* premium feature chips\n* mini ingredient cards\n* elegant icon-style bullets\n* modern food-brand labels\n* clean commercial feature row\n\nTypography containers should feel premium and designed.\n\nUse:\n\n* soft gradient panels\n* glassmorphism cards\n* subtle blur overlays\n* premium rounded chips\n* layered translucent panels\n* elegant editorial blocks\n* modern DTC UI-inspired styling\n\nBackground containers should:\n\n* improve readability\n* enhance composition\n* feel integrated into the photography\n* never look like basic rectangles\n\nAvoid:\n\n* plain white boxes\n* flat Canva-style text backgrounds\n* harsh opaque rectangles\n\nDo not leave features as plain boring text.\n\n---\n\n## COLOR DIRECTION\n\nUse a color palette matching the actual product category.\n\nExamples:\n\n* tomato sauces → warm reds and rustic tones\n* pesto → deep herb greens\n* salads → vibrant fresh produce tones\n\nAquafoundry greens/blues should act as supporting accents only.\nDo not overpower the actual food category colors.\n\n---\n\n## LOGO\n\nUse uploaded logo exactly once.\n\nPlace the logo in the top-left corner only.\n\nThe logo should:\n\n* remain small\n* remain subtle\n* align cleanly with typography\n* maintain consistent spacing from edges\n* feel premium and intentional\n\nDo not:\n\n* redesign logo\n* duplicate logo\n* distort logo\n* add black box\n* add glow\n* overpower composition\n\nNever place logo:\n\n* center\n* bottom\n* on products\n* beside mascot\n* floating randomly\n\n---\n\n## MASCOT\n\nUse uploaded mascot only.\n\nThe mascot must remain the exact uploaded mascot.\n\nDo NOT:\n\n* redesign mascot\n* create a new mascot\n* change mascot proportions\n* change mascot species\n* create floating mascot\n* place mascot in air\n* place mascot mid-jump\n* make mascot hover\n* create magical/fantasy positioning\n\nMascot must:\n\n* stand on a real visible surface\n* physically interact with environment correctly\n* cast realistic contact shadow\n* obey gravity\n* occupy maximum 5% visual weight\n* remain secondary\n\nAllowed mascot placement:\n\n* standing beside product\n* sitting on shelf\n* sitting on counter\n* leaning near typography\n* standing near feature cards\n* standing beside CTA\n* standing beside packaging\n\nNot allowed:\n\n* floating\n* flying\n* watering invisible objects\n* hovering near text\n* floating beside logo\n* giant mascot\n* centered mascot\n\nIf mascot interaction is unclear:\nplace mascot naturally beside the product instead of forcing action.\n\nMascot direction:\n{{ $json.Mascot_Scene_Direction }}\n\nIf the mascot action does not make physical or compositional sense,\nprioritize natural grounded placement over forced action.\n\n---\n\n## COMPOSITION\n\nCreate a premium Instagram paid-ad composition.\n\nUse fewer elements with stronger hierarchy.\n\nPriority order:\n\n1. product/package\n2. headline\n3. CTA\n4. features\n5. mascot\n6. logo\n\nThe composition should feel:\n\n* premium\n* clean\n* modern\n* uncluttered\n* high-converting\n* professionally art directed\n\nImportant:\n\n* product package with exact label must remain clear\n* campaign text must remain readable\n* features must feel professionally designed\n* CTA must remain visible\n* mascot and logo must remain subtle\n* use breathing room\n* avoid visual overload\n\n---\n\n## STRICT RULES\n\n* Preserve exact uploaded product_label\n* Preserve exact uploaded logo\n* Preserve exact uploaded mascot\n* Use exact headline, features, CTA only\n* Do not invent extra text\n* Do not create fake product labels\n* Do not alter label identity\n* Do not alter logo identity\n* Do not alter mascot identity\n\n---\n\n## STRICT NEGATIVE RULES\n\nDo NOT:\n\n* invent extra text\n* create fake labels\n* modify uploaded label\n* alter uploaded logo\n* alter uploaded mascot\n* create wrong product category\n* overcrowd the layout\n* create floating mascot\n* create green smoothie for sauce\n* create beverage bottle for pesto\n* create generic wellness juice aesthetic for all products\n\nFinal result should look like:\na professionally art-directed premium Instagram packaged-food advertisement for a modern Indian DTC food/wellness brand.\n",
+        "images": {
+          "values": [
+            {
+              "binaryPropertyName": "raw_image"
+            },
+            {
+              "binaryPropertyName": "mascot"
+            },
+            {
+              "binaryPropertyName": "logo"
+            },
+            {
+              "binaryPropertyName": "product_label"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        3584,
+        224
+      ],
+      "id": "c0947c56-acb9-40cd-8799-d4bef9320aa4",
+      "name": "Edit Image Packaging Locked"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.Selected_Product_Label_URL }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "product_label"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        3136,
+        224
+      ],
+      "id": "8564c40a-f640-4b36-9e41-5e7ed5285623",
+      "name": "Get Product Label File"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get row(s) in sheet1": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SUPAbase_Image_storage": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Build Runtime Asset Catalog",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Image URL": {
+      "main": [
+        [
+          {
+            "node": "Update Image URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Image URL": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Generate Image URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Get many events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many events": {
+      "main": [
+        [
+          {
+            "node": "Summarize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize": {
+      "main": [
+        [
+          {
+            "node": "Get Product Asset Catalog",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate an image": {
+      "main": [
+        [
+          {
+            "node": "Preserve Raw Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Mascot File": {
+      "main": [
+        [
+          {
+            "node": "Restore After Mascot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Logo File": {
+      "main": [
+        [
+          {
+            "node": "Restore After Logo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Gemini Edited Image": {
+      "main": [
+        [
+          {
+            "node": "jpeg to bin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "jpeg to bin": {
+      "main": [
+        [
+          {
+            "node": "SUPAbase_Image_storage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Asset Catalog + Brand Context": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Runtime Asset Catalog": {
+      "main": [
+        [
+          {
+            "node": "Generate an image",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preserve Raw Image": {
+      "main": [
+        [
+          {
+            "node": "Analyze an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze an image": {
+      "main": [
+        [
+          {
+            "node": "Parse Asset Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Asset Decision": {
+      "main": [
+        [
+          {
+            "node": "Get Mascot File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Restore After Mascot": {
+      "main": [
+        [
+          {
+            "node": "Get Logo File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Restore After Logo": {
+      "main": [
+        [
+          {
+            "node": "Is Packaging Locked?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Product Image List": {
+      "main": [
+        [
+          {
+            "node": "Get Product Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Product Image": {
+      "main": [
+        [
+          {
+            "node": "Analyze an image1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze an image1": {
+      "main": [
+        [
+          {
+            "node": "Parse Product Description",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Product Description": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Product Asset Catalog": {
+      "main": [
+        [
+          {
+            "node": "Build Asset Catalog + Brand Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Packaging Locked?": {
+      "main": [
+        [
+          {
+            "node": "Get Product Label File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Image Creative Food Scene",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Restore After Product Label": {
+      "main": [
+        [
+          {
+            "node": "Edit Image Packaging Locked",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Image Creative Food Scene": {
+      "main": [
+        [
+          {
+            "node": "Normalize Gemini Edited Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Product Label File": {
+      "main": [
+        [
+          {
+            "node": "Restore After Product Label",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Image Packaging Locked": {
+      "main": [
+        [
+          {
+            "node": "Normalize Gemini Edited Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  }
+}
